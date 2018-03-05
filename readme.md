@@ -30,15 +30,15 @@ Explanation
 
 我们将在以下帖子中一次性向 `Didact` 添加一些功能：
 
-- [`渲染DOM元素`](#渲染DOM元素)
+- [`渲染DOM元素`](#1-渲染DOM元素)
 
-- [`元素创建和JSX`](#元素创建和JSX)
+- [`元素创建和JSX`](#2-元素创建和JSX)
 
-- [`对比和虚拟DOM`](#实例-对比和虚拟dom)
+- [`实例 - 对比和虚拟DOM`](#3-实例-对比和虚拟dom)
 
-- [`组件和状态`](#组件和状态)
+- [`组件和状态`](#4-组件和状态)
 
-~~- [`Fibre：增量和解`](#纤维：增量和解)~~
+~~- [`Fibre：增量和解`](#5. fibre)~~
 
 ---
 
@@ -46,7 +46,10 @@ Explanation
 
 ---
 
+
 ## 1. 渲染DOM元素
+
+<details>
 
 > 这个故事是我们一步一步构建自己版本的React的系列文章的一部分：
 
@@ -259,8 +262,13 @@ function render(element, parentDom) {
 下一篇文章：[Didact: Element creation and JSX {en}](https://engineering.hexacta.com/didact-element-creation-and-jsx-d05171c55c56) | [Didact：元素创建和JSX {zh}](#2-元素创建和JSX)
 
 ---
+</details>
+
+---
 
 ## 2. 元素创建和JSX
+<details>
+
 
 > 这个故事是我们一步一步构建自己版本的React的系列文章的一部分：
 
@@ -384,7 +392,13 @@ function createTextElement(value) {
 
 在下一篇文章中，[Didact: Instances, reconciliation and virtual DOM](https://engineering.hexacta.com/didact-instances-reconciliation-and-virtual-dom-9316d650f1d0) | [我们介绍了Didact的虚拟DOM和协调算法以支持DOM更新](#实例-对比和虚拟dom)
 
-## 实例-对比和虚拟DOM
+</details>
+
+---
+
+## 3. 实例-对比和虚拟DOM
+<details>
+
 
 > 这个故事是我们一步一步构建自己版本的React的系列文章的一部分：
 
@@ -432,7 +446,7 @@ function render(element, parentDom) {
 对于这个小例子，这个解决方案运行良好，但对于更复杂的情况，重新创建所有子节点的性能成本是不可接受的。所以我们需要一种方法来比较当前和前一次调用生成的元素树render，并只更新差异。
 
 
-### 3. 虚拟DOM和对比
+### 3.1 虚拟DOM和对比
 
 React称这种“差异化”[进程调节](https://facebook.github.io/react/docs/reconciliation.html)。
 
@@ -450,7 +464,7 @@ React称这种“差异化”[进程调节](https://facebook.github.io/react/doc
 
 第二个问题是（稍后）我们将需要支持具有自己状态的组件，并且元素将无法处理它。
 
-### 3.1 实例
+### 3.2 实例
 
 所以我们需要引入一个新的术语：实例。
 
@@ -464,7 +478,7 @@ childInstances是一个包含元素子元素实例的数组。
 
 每个DOM节点都会有一个匹配的实例。协调算法的一个目标是尽可能避免创建或删除实例。创建和删除实例意味着我们也将修改DOM树，所以我们重新利用实例的次数越多，修改DOM树的次数越少。
 
-### 3.2 重构
+### 3.3 重构
 让我们重写我们的render函数，保持同样的暴力协调算法，并添加一个instantiate函数来创建一个给定元素的实例（及其子元素）：
 
 ``` js
@@ -574,9 +588,11 @@ function updateDomProperties(dom, prevProps, nextProps) {
 }
 ```
 
-updateDomProperties从dom节点中删除所有旧属性，然后添加所有新属性。如果属性发生了变化，它不会改变，所以它会进行大量不必要的更新，但为了简单起见，现在就让它保持原样。
+updateDomProperties从dom节点中删除所有旧属性，然后添加所有新属性。
 
-重用DOM节点
+如果属性发生了变化，它不会改变，所以它会进行大量不必要的更新，但为了简单起见，现在就让它保持原样。
+
+### 3.4 重用DOM节点
 我们说调和算法需要尽可能多地重用DOM节点。让我们为该reconcile函数添加一个验证，以检查之前渲染的元素是否与type我们当前正在渲染的元素相同。如果type相同，我们将重新使用它（更新属性以匹配新的属性）：
 
 ``` js
@@ -600,7 +616,7 @@ function reconcile(parentDom, instance, element) {
 }
 ```
 
-### 3.3 儿童和解
+### 3.5 儿童和解
 该reconcile功能缺少一个关键步骤，它使孩子不受影响。儿童和解是React的一个关键方面，它需要元素（key）中的额外属性来匹配先前和当前树中的孩子。我们将使用这种算法的天真版本，它只比较儿童数组中相同位置的孩子。这种方法的成本是，我们失去了重用DOM节点的机会，当他们改变渲染之间的子数组的顺序时。
 
 为了实现这一点，我们将先前的子实例instance.childInstances与子元素进行匹配element.props.children，然后reconcile逐个调用。我们还保留所有返回的实例，reconcile以便我们可以更新childInstances：
@@ -642,7 +658,7 @@ function reconcileChildren(instance, element) {
 }
 ```
 
-### 3.4 删除DOM节点
+### 3.6 删除DOM节点
 
 如果nextChildElements长于childInstances，reconcileChildren将为所有额外的子元素调用reconcile一个undefined实例。这不应该是一个问题，因为它if (instance == null)会照顾它并创建新的实例。但是反过来呢？当childInstances它比nextChildElements传递undefined元素的时间长，reconcile并试图获取时抛出错误element.type。
 
@@ -689,7 +705,7 @@ function reconcileChildren(instance, element) {
 }
 ```
 
-### 3.5 概要
+### 3.7 概要
 
 在这篇文章中，我们增强了Didact以允许更新DOM。我们还提高了效率，通过重用DOM节点来避免对DOM树的大部分更改。这也具有保持一些DOM内部状态（如滚动位置或焦点）的良好副作用。
 
@@ -704,8 +720,13 @@ function reconcileChildren(instance, element) {
 [Didact: Component and State](https://engineering.hexacta.com/didact-components-and-state-53ab4c900e37)|[Didact：组件和状态](#组件和状态)
 
 在GitHub上检查[这 三个 提交](https://github.com/hexacta/didact/commit/6f5fdb7331ed77ba497fa5917d920eafe1f4c8dc)，以查看代码如何从前一篇文章中更改。
+</details>
+
+---
 
 ## 4. 组件和状态
+<details>
+
 
 > 这个故事是我们逐步构建我们自己版本的React系列的一部分：
 
@@ -740,7 +761,11 @@ class Component {
 }
 ```
 
-应用程序代码将扩展此类，然后使用它，以相同的方式，其他类型的元素，例如div或span，使用：<MyComponent/>。请注意，我们不需要在我们的createElement函数中改变任何东西，它将保持组件类作为type元素并props像往常一样处理。我们确实需要一个创建组件实例的函数（我们将其称为公共实例）给定一个元素：
+应用程序代码将扩展此类，然后使用它，以相同的方式，其他类型的元素，例如div或span，使用：<MyComponent/>。
+
+请注意，我们不需要在我们的createElement函数中改变任何东西，它将保持组件类作为type元素并props像往常一样处理。
+
+我们确实需要一个创建组件实例的函数（我们将其称为公共实例）给定一个元素：
 
 ``` js
 function createPublicInstance(element, internalInstance) {
@@ -810,9 +835,15 @@ function instantiate(element) {
 }
 ```
 
-组件元素和dom元素的内部实例是不同的。组件内部实例只能有一个子（从中返回render），因此它们具有该childInstance属性而不是childInstances实例具有的数组。另外，组件内部实例需要引用公共实例，以便render在对帐过程中调用该函数。
+组件元素和dom元素的内部实例是不同的。
 
-唯一缺少的是处理组件实例对帐，因此我们会在对帐算法中再添加一个案例。鉴于组件实例只能有一个孩子，我们不需要处理儿童和解，我们只需更新props公共实例，重新呈现孩子并调和它：
+组件内部实例只能有一个子（从中返回render），因此它们具有该childInstance属性而不是childInstances实例具有的数组。
+
+另外，组件内部实例需要引用公共实例，以便render在对帐过程中调用该函数。
+
+唯一缺少的是处理组件实例对帐，因此我们会在对帐算法中再添加一个案例。
+
+鉴于组件实例只能有一个孩子，我们不需要处理儿童和解，我们只需更新props公共实例，重新呈现孩子并调和它：
 
 ``` js
 function reconcile(parentDom, instance, element) {
@@ -917,4 +948,9 @@ Didact.render(<App stories={stories} />, document.getElementById("root"));
 
 ---
 
-~~## Fibre~~
+</details>
+
+---
+
+~~## 5. Fibre-递增对比~~
+
