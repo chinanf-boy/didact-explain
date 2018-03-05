@@ -34,7 +34,7 @@ Explanation
 
 - [`元素创建和JSX`](#元素创建和JSX)
 
-- [`对帐和虚拟DOM`](#实例，对帐和虚拟DOM)
+- [`对比和虚拟DOM`](#实例-对比和虚拟dom)
 
 - [`组件和状态`](#组件和状态)
 
@@ -695,7 +695,7 @@ function reconcileChildren(instance, element) {
 
 我[更新了以前的codepen](https://codepen.io/pomber/pen/WjLqYW?editors=0010)。它调用render状态（stories数组）中的每个更改。如果DOM节点重新创建，您可以检查开发工具。
 
-
+![3-codepen](./imgs/3-codepen.gif)
 
 [>>> codepen.io](https://codepen.io/pomber/pen/WjLqYW?editors=0010)
 
@@ -704,3 +704,217 @@ function reconcileChildren(instance, element) {
 [Didact: Component and State](https://engineering.hexacta.com/didact-components-and-state-53ab4c900e37)|[Didact：组件和状态](#组件和状态)
 
 在GitHub上检查[这 三个 提交](https://github.com/hexacta/didact/commit/6f5fdb7331ed77ba497fa5917d920eafe1f4c8dc)，以查看代码如何从前一篇文章中更改。
+
+## 4. 组件和状态
+
+> 这个故事是我们逐步构建我们自己版本的React系列的一部分：
+
+[该代码](https://codepen.io/pomber/pen/WjLqYW?editors=0010)从[过去](#实例-对比和虚拟DOM)后有一些问题：
+
+- 每次更改都会触发完整虚拟DOM树上的对帐
+
+- 国家是全球性的
+
+- 我们需要render在更改状态后显式调用该函数
+
+组件帮助我们解决这些问题，并让我们：
+
+- 为JSX定义我们自己的“标签”
+
+- 钩住lifecyle事件（不包含在这篇文章中）
+
+首先我们需要提供Component组件将要扩展的基类。我们需要一个带props参数和setState方法的构造函数，
+
+它接收一个partialState我们将用来更新组件状态的方法：
+
+``` js
+class Component {
+  constructor(props) {
+    this.props = props;
+    this.state = this.state || {};
+  }
+
+  setState(partialState) {
+    this.state = Object.assign({}, this.state, partialState);
+  }
+}
+```
+
+应用程序代码将扩展此类，然后使用它，以相同的方式，其他类型的元素，例如div或span，使用：<MyComponent/>。请注意，我们不需要在我们的createElement函数中改变任何东西，它将保持组件类作为type元素并props像往常一样处理。我们确实需要一个创建组件实例的函数（我们将其称为公共实例）给定一个元素：
+
+``` js
+function createPublicInstance(element, internalInstance) {
+  const { type, props } = element;
+  const publicInstance = new type(props);
+  publicInstance.__internalInstance = internalInstance;
+  return publicInstance;
+}
+```
+
+除了创建公共实例外，我们还保留对触发组件实例化的内部实例的引用，我们需要它能够在公共实例状态更改时仅更新实例子树：
+
+``` js
+class Component {
+  constructor(props) {
+    this.props = props;
+    this.state = this.state || {};
+  }
+
+  setState(partialState) {
+    this.state = Object.assign({}, this.state, partialState);
+    updateInstance(this.__internalInstance);
+  }
+}
+
+function updateInstance(internalInstance) {
+  const parentDom = internalInstance.dom.parentNode;
+  const element = internalInstance.element;
+  reconcile(parentDom, internalInstance, element);
+}
+```
+
+我们还需要更新该instantiate功能。对于组件，我们需要创建公共实例并调用组件的render函数来获取我们将再次传递给它的子元素instantiate：
+
+``` js
+function instantiate(element) {
+  const { type, props } = element;
+  const isDomElement = typeof type === "string";
+
+  if (isDomElement) {
+    // Instantiate DOM element
+    const isTextElement = type === TEXT_ELEMENT;
+    const dom = isTextElement
+      ? document.createTextNode("")
+      : document.createElement(type);
+
+    updateDomProperties(dom, [], props);
+
+    const childElements = props.children || [];
+    const childInstances = childElements.map(instantiate);
+    const childDoms = childInstances.map(childInstance => childInstance.dom);
+    childDoms.forEach(childDom => dom.appendChild(childDom));
+
+    const instance = { dom, element, childInstances };
+    return instance;
+  } else {
+    // Instantiate component element
+    const instance = {};
+    const publicInstance = createPublicInstance(element, instance);
+    const childElement = publicInstance.render();
+    const childInstance = instantiate(childElement);
+    const dom = childInstance.dom;
+
+    Object.assign(instance, { dom, element, childInstance, publicInstance });
+    return instance;
+  }
+}
+```
+
+组件元素和dom元素的内部实例是不同的。组件内部实例只能有一个子（从中返回render），因此它们具有该childInstance属性而不是childInstances实例具有的数组。另外，组件内部实例需要引用公共实例，以便render在对帐过程中调用该函数。
+
+唯一缺少的是处理组件实例对帐，因此我们会在对帐算法中再添加一个案例。鉴于组件实例只能有一个孩子，我们不需要处理儿童和解，我们只需更新props公共实例，重新呈现孩子并调和它：
+
+``` js
+function reconcile(parentDom, instance, element) {
+  if (instance == null) {
+    // Create instance
+    const newInstance = instantiate(element);
+    parentDom.appendChild(newInstance.dom);
+    return newInstance;
+  } else if (element == null) {
+    // Remove instance
+    parentDom.removeChild(instance.dom);
+    return null;
+  } else if (instance.element.type !== element.type) {
+    // Replace instance
+    const newInstance = instantiate(element);
+    parentDom.replaceChild(newInstance.dom, instance.dom);
+    return newInstance;
+  } else if (typeof element.type === "string") {
+    // Update dom instance
+    updateDomProperties(instance.dom, instance.element.props, element.props);
+    instance.childInstances = reconcileChildren(instance, element);
+    instance.element = element;
+    return instance;
+  } else {
+    //Update composite instance
+    instance.publicInstance.props = element.props;
+    const childElement = instance.publicInstance.render();
+    const oldChildInstance = instance.childInstance;
+    const childInstance = reconcile(parentDom, oldChildInstance, childElement);
+    instance.dom = childInstance.dom;
+    instance.childInstance = childInstance;
+    instance.element = element;
+    return instance;
+  }
+}
+```
+
+就这样，我们现在支持组件。我已经更新了codepen从最后一次使用它们。应用程序代码如下所示：
+
+
+``` js
+const stories = [
+  { name: "Didact introduction", url: "http://bit.ly/2pX7HNn" },
+  { name: "Rendering DOM elements ", url: "http://bit.ly/2qCOejH" },
+  { name: "Element creation and JSX", url: "http://bit.ly/2qGbw8S" },
+  { name: "Instances and reconciliation", url: "http://bit.ly/2q4A746" },
+  { name: "Components and state", url: "http://bit.ly/2rE16nh" }
+];
+
+class App extends Didact.Component {
+  render() {
+    return (
+      <div>
+        <h1>Didact Stories</h1>
+        <ul>
+          {this.props.stories.map(story => {
+            return <Story name={story.name} url={story.url} />;
+          })}
+        </ul>
+      </div>
+    );
+  }
+}
+
+class Story extends Didact.Component {
+  constructor(props) {
+    super(props);
+    this.state = { likes: Math.ceil(Math.random() * 100) };
+  }
+  like() {
+    this.setState({
+      likes: this.state.likes + 1
+    });
+  }
+  render() {
+    const { name, url } = this.props;
+    const { likes } = this.state;
+    const likesElement = <span />;
+    return (
+      <li>
+        <button onClick={e => this.like()}>{likes}<b>❤️</b></button>
+        <a href={url}>{name}</a>
+      </li>
+    );
+  }
+}
+
+Didact.render(<App stories={stories} />, document.getElementById("root"));
+```
+
+[>>> codepen](https://codepen.io/pomber/pen/RVqBrx?editors=0010)
+
+使用组件使我们能够创建自己的“JSX标签”，封装组件状态，并仅在受影响的子树上运行协调算法：
+
+![4-codepen](./imgs/4-codepen.gif)
+
+[>> codepen](https://codepen.io/pomber/pen/RVqBrx)
+
+最后一个[codepen](https://codepen.io/pomber/pen/RVqBrx)使用整个系列中的完整代码。您可以在此提交中[查看此帖子对Didact的更改。](https://github.com/hexacta/didact/commit/2e290ff5c486b8a3f361abcbc6e36e2c21db30b8)
+
+谢谢阅读。
+
+---
+
+~~## Fibre~~
