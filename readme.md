@@ -34,7 +34,7 @@ Explanation
 
 - [`元素创建和JSX`](#元素创建和JSX)
 
-- [`实例，对帐和虚拟DOM`](#实例，对帐和虚拟DOM)
+- [`对帐和虚拟DOM`](#实例，对帐和虚拟DOM)
 
 - [`组件和状态`](#组件和状态)
 
@@ -262,3 +262,171 @@ function render(element, parentDom) {
 
 ## 2. 元素创建和JSX
 
+> 这个故事是我们一步一步构建自己版本的React的系列文章的一部分：
+
+### 2.1 JSX
+
+上次我们介绍了[Didact Elements](#1.2-Didact元素)，它是一种描述我们想要呈现给DOM的非常详细的方式。
+
+在这篇文章中，我们将看到如何使用JSX来简化元素的创建。
+
+JSX提供了一些语法糖来创建元素。代替：
+
+``` js
+const element = {
+  type: "div",
+  props: {
+    id: "container",
+    children: [
+      { type: "input", props: { value: "foo", type: "text" } },
+      {
+        type: "a",
+        props: {
+          href: "/bar",
+          children: [{ type: "TEXT ELEMENT", props: { nodeValue: "bar" } }]
+        }
+      },
+      {
+        type: "span",
+        props: {
+          onClick: e => alert("Hi"),
+          children: [{ type: "TEXT ELEMENT", props: { nodeValue: "click me" } }]
+        }
+      }
+    ]
+  }
+};
+```
+
+我们得到
+
+``` js
+const element = (
+  <div id="container">
+    <input value="foo" type="text" />
+    <a href="/bar">bar</a>
+    <span onClick={e => alert("Hi")}>click me</span>
+  </div>
+);
+```
+
+如果你对JSX不熟悉，你可能会想知道最后一个片段是否是有效的javascript：它不是。
+
+为了使浏览器的理解，需要的代码由预处理转化为有效的JS，像巴贝尔（了解更多关于JSX阅读这篇文章由贾森·米勒）。
+
+例如，babel从上面将JSX转换为：
+
+``` js
+const element = createElement(
+  "div",
+  { id: "container" },
+  createElement("input", { value: "foo", type: "text" }),
+  createElement(
+    "a",
+    { href: "/bar" },
+    "bar"
+  ),
+  createElement(
+    "span",
+    { onClick: e => alert("Hi") },
+    "click me"
+  )
+);
+```
+
+[>>> babel repl ](https://babeljs.io/repl/#?babili=false&evaluate=true&lineWrap=false&presets=react&targets=&browsers=&builtIns=false&debug=false&code=%2F**%20%40jsx%20createElement%20*%2F%0A%0Aconst%20element%20%3D%20%28%0A%20%20%3Cdiv%20id%3D%22container%22%3E%0A%20%20%20%20%3Cinput%20value%3D%22foo%22%20type%3D%22text%22%20%2F%3E%0A%20%20%20%20%3Ca%20href%3D%22%2Fbar%22%3Ebar%3C%2Fa%3E%0A%20%20%20%20%3Cspan%20onClick%3D%7Be%20%3D%3E%20alert%28%22Hi%22%29%7D%3Eclick%20me%3C%2Fspan%3E%0A%20%20%3C%2Fdiv%3E%0A%29%3B)
+
+我们需要添加到Didact中来支持JSX是一个createElement功能，这就是其余部分工作由预处理器完成的。
+
+函数的第一个参数是type元素的第一个参数，第二个参数是元素的对象props，以及所有下面的参数children。
+
+createElement需要创建一个props对象，将其分配给第二个参数中的所有值，将该children属性设置为第二个参数后面的所有参数，然后使用typeand 返回一个对象props。把它放到代码中更容易：
+
+``` js
+function createElement(type, config, ...args) {
+  const props = Object.assign({}, config);
+  const hasChildren = args.length > 0;
+  props.children = hasChildren ? [].concat(...args) : [];
+  return { type, props };
+}
+```
+
+除了一件事情之外，这个函数运行良好：文本元素。
+
+文本儿童作为字符串传递给createElement函数，Didact需要文本元素type以及props其余元素。
+
+所以我们将每个arg转换为一个文本元素，这个元素还不是一个元素：
+
+``` js
+const TEXT_ELEMENT = "TEXT ELEMENT";
+
+function createElement(type, config, ...args) {
+  const props = Object.assign({}, config);
+  const hasChildren = args.length > 0;
+  const rawChildren = hasChildren ? [].concat(...args) : [];
+  props.children = rawChildren
+    .filter(c => c != null && c !== false)
+    .map(c => c instanceof Object ? c : createTextElement(c));
+  return { type, props };
+}
+
+function createTextElement(value) {
+  return createElement(TEXT_ELEMENT, { nodeValue: value });
+}
+```
+
+我还筛选了要排除的子项列表null，undefined并指出false，我们不会呈现这些子项，因此不需要添加它们props.children。
+### 2.2 概要
+
+在这篇文章中我们没有给Didact增加任何实际的权力，但是我们现在有了改进的开发者体验，因为我们可以使用JSX来定义元素。我已经[更新了上次的codepen](https://codepen.io/pomber/pen/xdmoWE?editors=0010)以包含来自这篇文章的代码。请注意，codepen使用babel来传输JSX，开头的注释/** @jsx createElement */告诉babel使用函数。
+
+您还可以检查[Github提交的更改。](https://github.com/hexacta/didact/commit/15010f8e7b8b54841d1e2dd9eacf7b3c06b1a24b)
+
+在下一篇文章中，[Didact: Instances, reconciliation and virtual DOM](https://engineering.hexacta.com/didact-instances-reconciliation-and-virtual-dom-9316d650f1d0) | [我们介绍了Didact的虚拟DOM和协调算法以支持DOM更新](#实例-对比和虚拟dom)
+
+## 实例-对比和虚拟DOM
+
+> 这个故事是我们一步一步构建自己版本的React的系列文章的一部分：
+
+到目前为止，我们实现了一个基于JSX描述创建dom元素的机制。在这篇文章中，我们将重点介绍如何更新DOM。
+
+直到我们setState在后面的文章中介绍时，更新dom的唯一方法是使用不同的元素再次调用render函数（[从第一篇文章开始](#1.3-渲染-DOM-元素)）。例如，如果我们想渲染一个时钟，代码将是：
+
+``` js
+const rootDom = document.getElementById("root");
+
+function tick() {
+  const time = new Date().toLocaleTimeString();
+  const clockElement = <h1>{time}</h1>;
+  render(clockElement, rootDom);
+}
+
+tick();
+setInterval(tick, 1000);
+```
+
+[>>> codepen.io](https://codepen.io/pomber/pen/KmXeXr?editors=0010)
+
+使用该函数的当前版本，这不起作用。而不是更新每个它相同的div 它会追加一个新的。
+
+解决这个问题的第一种方法是替换每个更新的div。
+
+在函数结束时，我们检查父项是否有任何子项，如果有，我们用新元素生成的dom替换它：rendertickrender
+
+``` js
+function render(element, parentDom) {  
+  
+  // ...
+  // Create dom from element
+  // ...
+  
+  // Append or replace dom
+  if (!parentDom.lastChild) {
+    parentDom.appendChild(dom);     
+  } else {
+    parentDom.replaceChild(dom, parentDom.lastChild);    
+  }
+}  
+```
+
+对于这个小例子，这个解决方案运行良好，但对于更复杂的情况，重新创建所有子节点的性能成本是不可接受的。所以我们需要一种方法来比较当前和前一次调用生成的元素树render，并只更新差异。
