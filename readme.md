@@ -24,7 +24,7 @@ Explanation
 
 实际上，它们非常简单，可以用不到200行代码编写。
 
-我们将这样做。使用相同的API在不到200行的代码中编写React的工作版本。鉴于这个图书馆的教学性质，我们将其称为Didact。
+我们将这样做。使用相同的API在不到200行的代码中编写React的工作版本。鉴于这个图书馆的教学性质，我们将其称为`Didact`。
 
 ---
 
@@ -78,21 +78,21 @@ domRoot.appendChild(domInput);
 domRoot.appendChild(domText);
 ```
 
-[>>> codepen.io](https://codepen.io/pomber/pen/aWBLJR)
+> [>>> codepen.io](https://codepen.io/pomber/pen/aWBLJR)
 
 请注意，我们正在设置[元素属性而不是属性](http://stackoverflow.com/questions/6003819/properties-and-attributes-in-html)。这意味着只允许有效的属性。
 
 ### 1.2 Didact元素
 
-我们将使用普通的JS对象来描述需要渲染的东西。我们将它们称为Didact Elements。
+我们将使用普通的JS对象来描述需要渲染的东西。我们将它们称为`Didact Elements`。
 
 这些元素有两个必需的属性：`type`和`props`。
 
-- `type`可以是一个字符串或一个函数，但我们将只使用字符串，直到我们在稍后的帖子中引入组件。
+- `type`可以是一个**{字符串string}**或一个**{函数function}**, 但我们将只使用-字符串-，直到我们在稍后的帖子中引入-组件-。
 
-- `props`是可以为空的对象（但不为空）。props可能有一个children属性，它应该是一个Didact元素的数组。
+- `props`是可以为空的对象（但不为空）。`props`可能有一个`children`属性，它应该是一个`Didact元素`的数组。
 
-> 我们会很多地使用Didact Elements，所以从现在开始我们只会称它们为元素。不要与HTML元素混淆，我们会调用DOM元素，或者只是dom在命名变量时（如preact一样）。
+> 我们会很多地使用`Didact Elements`，所以从现在开始我们只会称它们为**{元素element}**, 不要与`HTML element`混淆.
 
 例如，像这样的一个元素：
 
@@ -112,7 +112,7 @@ const element = {
 
 描述这个dom:
 
-``` jsx
+``` html
 <div id="container">
   <input value="foo" type="text">
   <a href="/bar"></a>
@@ -122,13 +122,13 @@ const element = {
 
 ---
 
-Didact元素与React元素非常相似。
+`Didact-元素`与`React-元素`非常相似。
 
-但是通常你在使用React时不会创建React元素作为JS对象，
+但是通常你在使用`React`时不会创建`React-元素`作为JS对象，
 
-你可能使用JSX或者甚至是createElement。
+你可能使用`JSX`或者甚至是`createElement`。
 
-我们将在Didact中做同样的事情，但我们将留下系列中下一篇文章的元素创建代码。
+我们将在`Didact`中做同样的事情，但我们将会在系列下一篇文章中描述-`createElement`-的代码。
 
 ---
 
@@ -136,20 +136,22 @@ Didact元素与React元素非常相似。
 
 下一步是将元素及其子元素呈现给dom。
 
-我们将使用一个render函数（相当于ReactDOM.render）接收一个元素和一个dom容器。
+我们将使用一个`render`函数（相当于`ReactDOM.render`）接收一个元素和一个`dom容器`。
 
-该函数应该创建由元素定义的dom子树并将其附加到容器中：
+该函数应该创建由`element`定义的`dom子树`并将其附加到`容器`中：
 
 ``` js
 function render(element, parentDom) {
-  const { type, props } = element;
-  const dom = document.createElement(type);
-  const childElements = props.children || [];
-  childElements.forEach(childElement => render(childElement, dom));
-  parentDom.appendChild(dom);
+  const { type, props } = element; // 获取类型 和 属性对象
+  const dom = document.createElement(type); // 创建-类型-element
+  const childElements = props.children || []; // 获取-孩子
+  childElements.forEach(childElement => render(childElement, dom)); // 每个孩子 都要加入-爸爸妈妈-的怀抱
+  // 
+  parentDom.appendChild(dom); // 爸爸妈妈加入爷爷奶奶的怀抱
 }
 ```
-我们仍然缺少属性和事件监听器。让我们props用Object.keys函数迭代属性名称并相应地设置它们：
+
+我们仍然缺少`属性`和`事件监听器`。让我们`props`用`Object.keys`函数`迭代`属性名称并相应地-设置-它们：
 
 ``` js
 function render(element, parentDom) {
@@ -157,16 +159,20 @@ function render(element, parentDom) {
   const dom = document.createElement(type);
 
   const isListener = name => name.startsWith("on");
+  // 是否开头-on
   Object.keys(props).filter(isListener).forEach(name => {
-    const eventType = name.toLowerCase().substring(2);
+    const eventType = name.toLowerCase().substring(2); // 取两位后
     dom.addEventListener(eventType, props[name]);
   });
+  // 每一个开头-on 的属性-对应-函数 props[name] - >用-dom-addEvent 接连
 
   const isAttribute = name => !isListener(name) && name != "children";
+  // 不是-监听事件 和 不能是-孩子 
+
   Object.keys(props).filter(isAttribute).forEach(name => {
     dom[name] = props[name];
   });
-
+ // 过滤出来的属性 - 赋予 - > dom
   const childElements = props.children || [];
   childElements.forEach(childElement => render(childElement, dom));
 
@@ -176,24 +182,24 @@ function render(element, parentDom) {
 
 ### 1.4 渲染DOM文本节点
 
-render函数不支持的一件事是文本节点。首先，我们需要定义文本元素的外观。例如，`<span>Foo</span>`在React中描述的元素如下所示：
+`render`函数不支持的一件事是`文本节点`。首先，我们需要定义文本元素的外观。例如，`<span>Foo</span>`在`React`中描述的元素如下所示：
 
 ``` js
 const reactElement = {
   type: "span",
   props: {
-    children: ["Foo"]
+    children: ["Foo"] // 是孩子, 但也只是一个字符串
   }
 };
 ```
 
-请注意，孩子，而不是另一个元素对象，只是一个字符串。
+请注意，`children`，只是一个字符串 ，而不是另一个元素对象。
 
-这违背了我们如何定义Didact元素：children应该是元素的数组和所有元素应该有type和props。
+这违背了我们如何定义`Didact元素`：`children`应该是元素的数组和所有元素应该有`type`和`props`。
 
-如果我们遵循这些规则，我们将来会少一些if。
+如果我们遵循这些规则，我们将来会少一些`if`判断。
 
-因此，Didact Text Elements将type与“TEXT ELEMENT”相等，实际文本将位于nodeValue属性中。
+因此，`Didact Text Elements`将`type==“TEXT ELEMENT”`相等，实际文本将位于`nodeValue`属性中。
 
 像这个：
 
@@ -203,26 +209,26 @@ const textElement = {
   props: {
     children: [
       {
-        type: "TEXT ELEMENT",
-        props: { nodeValue: "Foo" }
+        type: "TEXT ELEMENT", // 1
+        props: { nodeValue: "Foo" } // 2
       }
     ]
   }
 };
 ```
 
-现在我们已经定义了文本元素的外观，就像我们可以呈现它 与其他元素的区别是文本元素，
+现在我们已经规范了文本元素的数据结构，我们需要可以呈现它, 以便与其他元素一样，而区别也就是{`type: "TEXT ELEMENT"`}。
 
-而不是使用createElement应该使用createTextNode。
+我们应该使用`createTextNode`，而不是使用`createElement`。
 
-就是这样，nodeValue将会像其他属性一样设置。
+就是这样，`nodeValue`将会像其他属性一样设置。
 
 ``` js
 function render(element, parentDom) {
   const { type, props } = element;
 
   // Create DOM element
-  const isTextElement = type === "TEXT ELEMENT";
+  const isTextElement = type === "TEXT ELEMENT"; // 文本类型判定
   const dom = isTextElement
     ? document.createTextNode("")
     : document.createElement(type);
@@ -251,17 +257,19 @@ function render(element, parentDom) {
 
 ### 1.5 概要
 
-我们创建了一个render函数，允许我们将一个元素及其子元素呈现给DOM。
+我们创建了一个`render函数`，允许我们将`一个元素{element}及其子元素{children}`呈现给-DOM「`parentDom.appendChild(dom);`」。
 
-接下来我们需要的是创建元素的简单方法。
+接下来我们需要的是`createElement`的简单方法。
 
-我们将在下一篇文章中做到这一点，在那里我们将让JSX与Didact一起工作。
+我们将在下一篇文章中做到这一点，在那里我们将让`JSX与Didact`一起工作。
 
 如果您想尝试我们迄今为止编写的代码，请检查[codepen](https://codepen.io/pomber/pen/eWbwBq?editors=0010)。你也可以从[github回购中检查这个差异](https://github.com/hexacta/didact/commit/fc4d360d91a1e68f0442d39dbce5b9cca5a08f24)。
 
-下一篇文章：[Didact: Element creation and JSX {en}](https://engineering.hexacta.com/didact-element-creation-and-jsx-d05171c55c56) | [Didact：元素创建和JSX {zh}](#2-元素创建和JSX)
-
 ---
+
+下一篇文章：[Didact: Element creation and JSX {en}](https://engineering.hexacta.com/didact-element-creation-and-jsx-d05171c55c56) | |||[Didact：元素创建和JSX {zh}](#2-元素创建和JSX)
+
+
 </details>
 
 ---
