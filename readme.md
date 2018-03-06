@@ -267,7 +267,7 @@ function render(element, parentDom) {
 
 ---
 
-下一篇文章：[Didact: Element creation and JSX {en}](https://engineering.hexacta.com/didact-element-creation-and-jsx-d05171c55c56) | |||[Didact：元素创建和JSX {zh}](#2-元素创建和JSX)
+下一篇文章：[Didact: Element creation and JSX {en}](https://engineering.hexacta.com/didact-element-creation-and-jsx-d05171c55c56) |-|_|🌟|[Didact：元素创建和JSX {zh}](#2-%E5%85%83%E7%B4%A0%E5%88%9B%E5%BB%BA%E5%92%8Cjsx)
 
 
 </details>
@@ -275,6 +275,7 @@ function render(element, parentDom) {
 ---
 
 ## 2. 元素创建和JSX
+
 <details>
 
 
@@ -282,11 +283,11 @@ function render(element, parentDom) {
 
 ### 2.1 JSX
 
-上次我们介绍了[Didact Elements](#1.2-Didact元素)，它是一种描述我们想要呈现给DOM的非常详细的方式。
+上次我们介绍了[Didact Elements](#1.2-didact元素)，它是一种描述我们想要呈现给-DOM-的非常详细的方式`{数据结构}`。
 
-在这篇文章中，我们将看到如何使用JSX来简化元素的创建。
+在这篇文章中，我们将看到如何使用`JSX`来简化元素的创建。
 
-JSX提供了一些语法糖来创建元素。代替：
+`JSX`提供了一些语法糖来创建元素。以便代替：
 
 ``` js
 const element = {
@@ -314,7 +315,7 @@ const element = {
 };
 ```
 
-我们得到
+我们的代码可以是
 
 ``` js
 const element = (
@@ -326,11 +327,11 @@ const element = (
 );
 ```
 
-如果你对JSX不熟悉，你可能会想知道最后一个片段是否是有效的javascript：它不是。
+如果你对`JSX`不熟悉，你可能会想知道最后一个片段是否是有效的`javascript：`它不是。
 
-为了使浏览器的理解，需要的代码由预处理转化为有效的JS，像巴贝尔（了解更多关于JSX阅读这篇文章由贾森·米勒）。
+为了使浏览器的理解，需要的代码由预处理转化为-有效的JS，像babel[了解更多关于JSX阅读这篇文章由贾森·米勒](https://jasonformat.com/wtf-is-jsx/)。
 
-例如，babel从上面将JSX转换为：
+例如，`babel`从上面将JSX转换为：
 
 ``` js
 const element = createElement(
@@ -350,31 +351,31 @@ const element = createElement(
 );
 ```
 
-[>>> babel repl ](https://babeljs.io/repl/#?babili=false&evaluate=true&lineWrap=false&presets=react&targets=&browsers=&builtIns=false&debug=false&code=%2F**%20%40jsx%20createElement%20*%2F%0A%0Aconst%20element%20%3D%20%28%0A%20%20%3Cdiv%20id%3D%22container%22%3E%0A%20%20%20%20%3Cinput%20value%3D%22foo%22%20type%3D%22text%22%20%2F%3E%0A%20%20%20%20%3Ca%20href%3D%22%2Fbar%22%3Ebar%3C%2Fa%3E%0A%20%20%20%20%3Cspan%20onClick%3D%7Be%20%3D%3E%20alert%28%22Hi%22%29%7D%3Eclick%20me%3C%2Fspan%3E%0A%20%20%3C%2Fdiv%3E%0A%29%3B)
+> [>> babel repl ](https://babeljs.io/repl/#?babili=false&evaluate=true&lineWrap=false&presets=react&targets=&browsers=&builtIns=false&debug=false&code=%2F**%20%40jsx%20createElement%20*%2F%0A%0Aconst%20element%20%3D%20%28%0A%20%20%3Cdiv%20id%3D%22container%22%3E%0A%20%20%20%20%3Cinput%20value%3D%22foo%22%20type%3D%22text%22%20%2F%3E%0A%20%20%20%20%3Ca%20href%3D%22%2Fbar%22%3Ebar%3C%2Fa%3E%0A%20%20%20%20%3Cspan%20onClick%3D%7Be%20%3D%3E%20alert%28%22Hi%22%29%7D%3Eclick%20me%3C%2Fspan%3E%0A%20%20%3C%2Fdiv%3E%0A%29%3B)
 
-我们需要添加到Didact中来支持JSX是一个createElement功能，这就是其余部分工作由预处理器完成的。
+我们需要添加到`Didact`中来支持`JSX`是一个`createElement`功能，这就是其余部分工作由-预处理器-完成的。
 
-函数的第一个参数是type元素的第一个参数，第二个参数是元素的对象props，以及所有下面的参数children。
+函数的第一个参数是`type`元素的第一个参数，第二个参数是元素的对象`props`，以及所有下面的参数`children`。
 
-createElement需要创建一个props对象，将其分配给第二个参数中的所有值，将该children属性设置为第二个参数后面的所有参数，然后使用typeand 返回一个对象props。把它放到代码中更容易：
+`createElement`需要创建一个`props`对象，将其分配给第二个参数中的所有值，将该`children`属性设置为第二个参数后面的所有参数，然后返回一个对象`{}` - 带有 `{type, props }`。把它放到代码中更容易：
 
 ``` js
 function createElement(type, config, ...args) {
-  const props = Object.assign({}, config);
-  const hasChildren = args.length > 0;
+  const props = Object.assign({}, config);// 合并
+  const hasChildren = args.length > 0; // 孩子？
   props.children = hasChildren ? [].concat(...args) : [];
-  return { type, props };
+  return { type, props }; // Didact元素的数据结构-类型{type}与属性{props}
 }
 ```
 
-除了一件事情之外，这个函数运行良好：文本元素。
+除了一件事情之外，这个函数运行良好：`文本元素`。
 
-文本儿童作为字符串传递给createElement函数，Didact需要文本元素type以及props其余元素。
+文本-作为字符串-传递给`createElement`函数，`Didact`需要文本元素`type`以及`props`其余元素。
 
-所以我们将每个arg转换为一个文本元素，这个元素还不是一个元素：
+所以我们将`每个arg`转换为一个文本元素-一个规范的`Didact元素：
 
 ``` js
-const TEXT_ELEMENT = "TEXT ELEMENT";
+const TEXT_ELEMENT = "TEXT ELEMENT"; // 类型
 
 function createElement(type, config, ...args) {
   const props = Object.assign({}, config);
@@ -383,28 +384,41 @@ function createElement(type, config, ...args) {
   props.children = rawChildren
     .filter(c => c != null && c !== false)
     .map(c => c instanceof Object ? c : createTextElement(c));
+    // 过滤-空-值, 剩下的-不属于-Object的值 -> createTextElement -> 变为 类型为TEXT_ELEMENT- Didact元素
   return { type, props };
 }
 
 function createTextElement(value) {
+  // 规范数据
   return createElement(TEXT_ELEMENT, { nodeValue: value });
 }
 ```
 
-我还筛选了要排除的子项列表null，undefined并指出false，我们不会呈现这些子项，因此不需要添加它们props.children。
+我还筛选了要排除的子项列表`null，undefined并指出false`.
+
+我们不会呈现这些子项，因此不需要`添加`它们`props.children`。
+
+
 ### 2.2 概要
 
-在这篇文章中我们没有给Didact增加任何实际的权力，但是我们现在有了改进的开发者体验，因为我们可以使用JSX来定义元素。我已经[更新了上次的codepen](https://codepen.io/pomber/pen/xdmoWE?editors=0010)以包含来自这篇文章的代码。请注意，codepen使用babel来传输JSX，开头的注释/** @jsx createElement */告诉babel使用函数。
+在这篇文章中我们没有给`Didact`增加任何实际的权力，但是我们现在有了改进的开发者体验，
+
+因为我们可以使用`JSX`来定义元素。我已经[更新了上次的codepen](https://codepen.io/pomber/pen/xdmoWE?editors=0010)以包含来自这篇文章的代码。
+
+请注意，`codepen`使用`babel来传输JSX`，开头的注释`/** @jsx createElement */`告诉`babel`使用函数。
 
 您还可以检查[Github提交的更改。](https://github.com/hexacta/didact/commit/15010f8e7b8b54841d1e2dd9eacf7b3c06b1a24b)
 
-在下一篇文章中，[Didact: Instances, reconciliation and virtual DOM](https://engineering.hexacta.com/didact-instances-reconciliation-and-virtual-dom-9316d650f1d0) | [我们介绍了Didact的虚拟DOM和协调算法以支持DOM更新](#实例-对比和虚拟dom)
+---
+
+在下一篇文章中，[Didact: Instances, reconciliation and virtual DOM](https://engineering.hexacta.com/didact-instances-reconciliation-and-virtual-dom-9316d650f1d0) |-|_|🌟| [我们介绍了Didact的虚拟DOM和协调算法以支持DOM更新](#3-%E5%AE%9E%E4%BE%8B-%E5%AF%B9%E6%AF%94%E5%92%8C%E8%99%9A%E6%8B%9Fdom)
 
 </details>
 
 ---
 
 ## 3. 实例-对比和虚拟DOM
+
 <details>
 
 
