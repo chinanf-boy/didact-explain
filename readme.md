@@ -38,7 +38,7 @@ Explanation
 
 - [`组件和状态`](#4-组件和状态)
 
-~~- [`Fibre：增量和解`](#5. fibre)~~
+~~-[`Fibre：递增对比`](#5-fibre-递增对比)~~
 
 ---
 
@@ -1122,5 +1122,6 @@ Didact.render(<App stories={stories} />, document.getElementById("root"));
 
 ---
 
-~~## 5. Fibre-递增对比~~
+## 5. Fibre-递增对比
 
+> ~~[fibre.readme.md](./Fibre.readme.md)~~
