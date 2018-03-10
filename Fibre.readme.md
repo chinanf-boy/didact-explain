@@ -1,6 +1,5 @@
 ## 5. Fibre-递增对比
 
-未完成请勿点击
 
 > 这个故事是一个部分系列，`手动👋写自己-React`的版本，但因为我们要重写大部分旧代码的，无论如何，我会 tl;dr它为您提供：
 
@@ -9,6 +8,10 @@
 >TL;DR : 到目前为止的系列：我们正在编写一个React克隆来了解React在底层做了什么。我们称之为[`Didact`](./readme.md)。为了简化代码，我们只关注-React-的主要功能。首先我们介绍如何渲染元素并使JSX工作。我们编写了对比算法来重新渲染仅更新之间更改的内容。然后我们添加了-`Component - class` 和 `setState()`。
 
 ---
+
+<details>
+
+<summary>说一说❤️react didact</summary>
 
 现在`React-16`已经不复存在，并且有了一个新的内部架构，需要重写-React-的大部分代码。
 
@@ -29,10 +32,13 @@
 [更新的演示-codepen](https://codepen.io/pomber/pen/veVOdd)或访问[->github存储库](https://github.com/hexacta/didact)。
 
 现在, 让我解释为什么我们需要重写旧代码。
+</details>
 
 ---
 
 ### 5.1 为什么选择Fiber
+
+<details>
 
 > 这不会提供`React-Fiber`的完整画面。如果您想了解更多信息，请查看-[`此资源列表`](https://github.com/koba04/react-fiber-resources)。
 
@@ -44,7 +50,41 @@
 
 记住-[`对比代码`](./readme.md#3-实例-对比和虚拟dom)？一旦开始对比，它不会停止。如果主线程需要做其他任何事情，它将不得不等待。而且，`因为递归调用很大程度上取决于它，所以很难使它可以被使用`。这就是为什么我们要用一个新的数据结构来重写它，这将允许我们用`循环`-替换-`递归调用`。
 
+---
+
+> ## 提示 fibre 理解
+
+[你是新手 请点击 观察 本🌰中两种不同 `jsbin-fibre`](http://jsbin.com/coyunux/2/edit?js,console)
+
+- 看了上面这个🌰，你需要明白，`fibre` 带有数据流动 的认知
+
+- 然后你看了 [`此资源列表`]((https://github.com/koba04/react-fiber-resources)) 了吗，为了加深-对-react-fibre 的认知, 我们需要其中的[demo-🌰子](https://koba04.github.io/react-fiber-resources/examples/)
+
+`说回 react-fibre 这个念想 ` 在  带有数据的特性 的 `-fibre-`中 赋予了`-优先级-`属性记录，可以看到[demo-🌰子](https://koba04.github.io/react-fiber-resources/examples/) 带有共 三个选择或输入项 
+
+  1. `pleace input text`
+
+  > 没有变化的
+
+  2. `Async mode` 默认
+
+  > 使用了-[实验性`react.unstable_deferredUpdates` 会赋予此元素一个低优先级](https://sourcegraph.com/github.com/koba04/react-fiber-resources/-/blob/examples/components/App.js#L30)
+
+  3. `sync mode`
+
+  > 会到同步，也就是没有变化
+
+可以看到 -`Async mode`- 的卡顿, 它这个组件元素被分配的优先级低，而
+，`sync mode` 比 `Async mode` 优先级高, 为优先级高的让道。比如优先级高的动画。
+
+> 当然，`react-fibre` 不止做了这件事:P
+</details>
+
+---
+
 ### 5.2 调度微任务
+
+<details>
 
 我们需要将工作-分解为更小的部分，短时间运行这些部分，让主线程执行`更高优先级`的任务，并且如果有-任何待处理的事情-回来完成工作。
 
@@ -80,7 +120,12 @@ function performWork(deadline) {
 
 为了跟踪这些工作，我们将使用`Fibre`。
 
+</details>
+
+
 ### 5.3 Fibre-数据结构
+
+<details>
 
 我们将为每个想要渲染的组件创建一个`Fibre`。这`nextUnitOfWork`将是对我们想要工作的下一个`Fibre`的参考。`performUnitOfWork`将在该`Fibre`上工作，并返回一个`新的Fibre`-直到所有工作完成。容许我，我会稍后详细解释这一点。
 
@@ -143,9 +188,11 @@ tag: HOST_COMPONENT,
 
 > 这可能是一次太多的信息，如果你没有跟上，不要担心，我们很快就会看到`Fibre`树在运行。
 
+</details>
+
 ---
 
-### Didact调用层次结构
+### 5.4 Didact调用层次结构
 
 要了解我们要编写的代码的流程，请查看此图表：
 
@@ -153,7 +200,11 @@ tag: HOST_COMPONENT,
 
 我们将从`render()`和开始，`setState()`并按照结束于的流程进行`commitAllWork()`。
 
-### 旧代码
+---
+
+#### 5.4.1 旧代码
+
+<details>
 
 我告诉过你，我们将重写大部分代码，但我们首先回顾一下我们不重写的代码。
 
@@ -185,8 +236,13 @@ function createInstance(fiber) {
 ---
 
 从这段代码开始，让我们从头开始重写其余部分。
+</details>
+
+#### 5.4.2
 
 ![5-pic1](./imgs/5-pic1.png)
+
+<details>
 
 除了`Component` class 和 `createElement()` 之外，我们还会有两个公共函数：`render()` 和 `setState()`，我们看到这`setState()`只是调用`scheduleUpdate()`。
 
@@ -225,8 +281,16 @@ function scheduleUpdate(instance, partialState) {
 我们将使用该`updateQueue`数组来跟踪待处理的更新。每次打运行`render()`或`scheduleUpdate()`推送一个新的更新到`updateQueue`。每个更新中的更新信息都不同，我们将看到我们以后如何使用它`resetNextUnitOfWork()`。
 
 将更新推送到队列后，我们触发延迟呼叫`performWork()`。
+</details>
+
+---
+
+
+#### 5.4.3
 
 ![5-pic2](./imgs/5-pic2.png)
+
+<details>
 
 ``` js
 const ENOUGH_TIME = 1; // milliseconds
@@ -273,8 +337,15 @@ function workLoop(deadline) {
 ---
 
 > 我们还没有看到第一个`nextUnitOfWork`来自哪里。
+</details>
+
+---
+
+#### 5.4.4
 
 ![5-pic3](./imgs/5-pic3.png)
+
+<details>
 
 `resetNextUnitOfWork()`更新一次并将其转换为第一个`nextUnitOfWork`：
 
@@ -324,13 +395,22 @@ function getRoot(fiber) {
 
 如果我们有一个旧的根，那么`stateNode`将是前一个根的**DOM节点**。该`props`会又`newProps`如果不是null，否则我们复制`props`从老根。这alternate将是老根。
 
+
 ---
 
 我们现在拥有`正在进行中的树`的根，让我们开始构建剩余的树。
 
 ---
 
+</details>
+
+---
+
+#### 5.4.5
+
 ![5-pic4](./imgs/5-pic4.png)
+
+<details>
 
 ``` js
 
@@ -363,9 +443,16 @@ function performUnitOfWork(wipFiber) {
 `performUnitOfWork()`多次呼叫会沿着树木向下，造成每根`Fibre`的第一个孩子的孩子，直到找到没有孩子的`Fibre`。然后它就像兄弟姐妹一样向右移动。而且它也跟叔叔一样。（为了更加生动的描述，尝试在`Fibre`调试器上渲染一些组件）
 
 ---
+</details>
+
+---
+
+#### 5.4.6
 
 ![5-pic4](./imgs/5-pic5.png)
 
+
+<details>
 
 ``` js
 function beginWork(wipFiber) {
@@ -419,9 +506,16 @@ function updateClassComponent(wipFiber) {
 ---
 
 现在，我们已经`newChildElements`准备好为正在进行中的`Fibre`创建子`Fibre`。
+</details>
 
+---
+
+
+#### 5.4.7
 
 ![5-pic4](./imgs/5-pic6.png)
+
+<details>
 
 ``` js
 // Effect tags
@@ -489,29 +583,36 @@ function reconcileChildrenArray(wipFiber, newChildElements) {
 }
 ```
 
-这是本库的核心，正在进行的工作树在不断增长，我们决定在提交阶段对DOM做什么更改。
+这是本库的核心，`正在进行的工作树`在不断增长，我们决定在提交阶段对-DOM-做什么更改。
 
 
-开始之前，我们确保`newChildElements`是一个数组。（与之前的协调算法不同，这个算法总是与子数组一起工作，这意味着我们现在可以在组件的`render()`函数上返回数组）
+开始之前，我们确保`newChildElements`是一个数组。（与之前的对比算法不同，这个算法总是与子数组一起工作，这意味着我们现在可以在组件的`render()`函数上返回数组）
 
-然后我们开始比较旧`Fibre`树的孩子和新元素（我们将`Fibre`与元素进行比较）。来自老`Fibre`树的孩子们都是孩子们的孩子wipFiber.alternate。新元素是我们wipFiber.props.children从调用或从调用中获得的元素wipFiber.`stateNode`.`render()`。
+然后我们开始比较旧`Fibre`树的孩子和新元素（我们将`Fibre`与元素进行比较）。来自老`Fibre`树的孩子们都是孩子们的孩子`wipFiber.alternate`。新元素是我们`wipFiber.props.children`从调用或从调用中获得的元素`wipFiber.stateNode.render()`。
 
-我们和解算法通过第一古老`Fibre`（匹配`wipFiber.alternate.child`）与第一子元素（elements[0]），第二旧`Fibre`（`wipFiber.alternate.child.sibling`）的第二子元素（elements[1]）等。对于每`oldFiber` - `element-对`：
+我们-算法通过 第一`Fibre`（匹配`wipFiber.alternate.child`）与第一子元素（elements[0]），第二旧`Fibre`（`wipFiber.alternate.child.sibling`）的第二子元素（elements[1]）等。而对于每 对 `oldFiber` - `element` ：
 
 - 如果`oldFiber`和`element`同样的`type`好消息，这意味着我们可以保留旧的`stateNode`。我们创建一个基于旧的`Fibre`的新`Fibre`。
 
-我们添加`UPDATE effectTag`。我们将新`Fibre`添加到正在进行的工作树中。
+我们添加`UPDATE effectTag`。我们将新`Fibre`添加到`正在进行的工作树`中。
 
-- 如果我们`element`与我们有一个不同`type`的`oldFiber`或者我们没有`oldFiber`（因为我们有比新的孩子更多的新孩子），我们创建一个新的`Fibre`与我们的信息`element`。请注意，这种新`Fibre`没有alternate，也不会有`stateNode`（`stateNode`我们将创建`beginWork()`）。的effectTag该`Fibre`是PLACEMENT。
+- 如果我们`element`与我们有一个不同`type`的`oldFiber`或者我们没有`oldFiber`（因为我们有比新的孩子更多的新孩子），我们创建一个新的`Fibre`与我们的信息`element`。请注意，这种新`Fibre`没有`alternate`，也不会有`stateNode`（`stateNode`我们将创建`beginWork()`）。该`Fibre`的`effectTag`是`PLACEMENT`。
 
-- 如果`oldFiber`和`element`有不同的`type`或没有任何`element`这`oldFiber`（因为我们有更多的老孩子比新来的孩子），我们将标记`oldFiber`为DELETION。鉴于这种`Fibre`不是正在进行工作的树的一部分，我们需要将它添加到`wipFiber.effects`列表中，以便我们不会丢失它的踪迹。
+- 如果`oldFiber`和`element`有不同的`type`或没有任何`element`这`oldFiber`（因为我们有更多的老孩子比新来的孩子），我们将标记`oldFiber`为`DELETION`。鉴于这种`Fibre`不是正在进行工作的树的一部分，我们需要将它添加到`wipFiber.effects`列表中，以便我们不会丢失它的踪迹。
 
-> 与React不同的是，我们没有使用键来进行和解，所以我们不知道一个孩子是否从之前的位置移动过来。
+> 与React不同的是，我们没有使用 <kbd>key</kbd> 来进行比对，所以我们不知道一个孩子是否从之前的位置移动过来。
+
+---
+</details>
 
 ---
 
+#### 5.4.8
+
 ![5-pic4](./imgs/5-pic7.png)
 
+
+<details>
 
 `updateClassComponent()` 有一个特殊情况，我们采取快捷方式，将旧的`Fibre`子树克隆到正在进行中的工作树，而不是进行调整。
 
@@ -547,9 +648,17 @@ function cloneChildFibers(parentFiber) {
 
 `cloneChildFibers()`克隆每个`wipFiber.alternate`孩子并将其附加到`正在进行中的树`中。我们不需要添加任何内容，`effectTag`因为我们确信没有任何变化。
 
+
+
+</details>
+
 ---
 
+#### 5.4.9
+
 ![5-pic4](./imgs/5-pic8.png)
+
+<details>
 
 在`performUnitOfWork()`a wipFiber没有新的孩子或者我们已经完成了所有孩子的工作时，我们打电话给他`completeWork()`。
 
@@ -575,11 +684,16 @@ function completeWork(fiber) {
 然后它建立一个列表`effects`。该列表将包含来自正在进行中的子树的所有`Fibre.effectTag`（它也包含来自旧子树的`Fibre`-`DELETION effectTag`）。这个想法是在根`effects`表中累积所有的`Fibre.effectTag`。
 
 最后，如果`Fibre`没有**parent**，我们就是正在进行工作的树的根。所以我们完成了这次更新的所有工作并收集了所有的效果。我们分配根，`pendingCommit`以便`workLoop()`可以调用`commitAllWork()`。
+</details>
 
 ---
 
+#### 5.4.10
+
 ![5-pic4](./imgs/5-pic9.png)
 
+
+<details>
 
 我们需要做的最后一件事是：改变DOM。
 
@@ -642,8 +756,11 @@ function commitDeletion(fiber, domParent) {
 - 如果它是`a DELETION`并且`Fibre`是主机组件，那很简单，我们只是打电话`removeChild()`。但是如果`Fibre`是类组件，在调用之前，`removeChild()`我们需要从`Fibre`子树中找到需要删除的所有主机组件。
 
 一旦我们完成了所有的效果，我们可以重置`nextUnitOfWork`和`pendingCommit`。正在进行的工作树不再是正在进行中的工作树，并成为旧树，因此我们将其根指定给`_rootContainerFiber`。之后，我们完成当前的更新，我们准备开始下一个🚀。
+</details>
 
-### 正在运行的Didact
+---
+
+### 5.5 正在运行的Didact
 
 如果你想把所有的东西放在一起，只公开API，你可以这样做：
 
@@ -677,7 +794,9 @@ Didact.render(
 
 或者你可以使用的[演示更新版本](https://codepen.io/pomber/pen/veVOdd)。所有这些代码也可以在[Didact的仓库](https://github.com/hexacta/didact)和[npm - didact](https://unpkg.com/didact)中获得。
 
-### 下一步是什么？
+---
+
+### 5.6 下一步是什么？
 Didact缺少很多React的功能，但我特别有兴趣根据优先级安排更新：
 
 ``` js
