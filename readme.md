@@ -1116,20 +1116,10 @@ Didact.render(<App stories={stories} />, document.getElementById("root"));
 
 > [fibre.readme.md](./Fibre.readme.md)
 
-<<<<<<< HEAD
-### 工具
+### 使用工具
 
 - 使用[translate-mds](https://github.com/chinanf-boy/translate-mds)完成翻译初稿
 
 ## 生活
 
 [help me live , live need money 💰](https://github.com/chinanf-boy/live-need-money)
-=======
-### 温馨提示
-
-[translate-mds](https://github.com/chinanf-boy/translate-mds)
-
-翻译 `md` 文件工具, 可作为翻译初稿
-
-> ⚠️ 不是完全正确的
->>>>>>> ee5c986345d85d1bbc8e49d1d202011268ff46e1
