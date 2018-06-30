@@ -1,8 +1,6 @@
-# didact
+# didact [![explain](http://llever.com/explain.svg)](https://github.com/chinanf-boy/Source-Explain)
 
-「 一个DIY指南建立你自己的反应 」
-
-[![explain](http://llever.com/explain.svg)](https://github.com/chinanf-boy/Source-Explain)
+「 一个DIY指南建立你自己的反应 翻译」
 
 [github source](https://github.com/hexacta/didact) |  [english](https://engineering.hexacta.com/didact-learning-how-react-works-by-building-it-from-scratch-51007984e5c5)
 
@@ -1118,6 +1116,7 @@ Didact.render(<App stories={stories} />, document.getElementById("root"));
 
 > [fibre.readme.md](./Fibre.readme.md)
 
+<<<<<<< HEAD
 ### 工具
 
 - 使用[translate-mds](https://github.com/chinanf-boy/translate-mds)完成翻译初稿
@@ -1125,3 +1124,12 @@ Didact.render(<App stories={stories} />, document.getElementById("root"));
 ## 生活
 
 [help me live , live need money 💰](https://github.com/chinanf-boy/live-need-money)
+=======
+### 温馨提示
+
+[translate-mds](https://github.com/chinanf-boy/translate-mds)
+
+翻译 `md` 文件工具, 可作为翻译初稿
+
+> ⚠️ 不是完全正确的
+>>>>>>> ee5c986345d85d1bbc8e49d1d202011268ff46e1
