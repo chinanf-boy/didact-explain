@@ -1,4 +1,9 @@
-# didact [![explain](http://llever.com/explain.svg)](https://github.com/chinanf-boy/Source-Explain)
+# didact [![explain]][source] [![translate-svg]][translate-list]
+
+[explain]: http://llever.com/explain.svg
+[source]: https://github.com/chinanf-boy/Source-Explain
+[translate-svg]: http://llever.com/translate.svg
+[translate-list]: https://github.com/chinanf-boy/chinese-translate-list\
 
 「 一个DIY指南建立你自己的反应 翻译」
 
